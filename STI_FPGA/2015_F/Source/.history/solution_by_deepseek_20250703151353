@@ -1,0 +1,332 @@
+我们使用50MHz的时钟，通过PLL倍频到200MHz，这样每个时钟周期为5ns（1/200e6秒）。我们需要测量1-100MHz的方波信号，即周期为10ns到1000ns（频率为100MHz到1MHz）的信号。
+ 测量思路：
+ 1. 使用高频时钟（200MHz）对待测方波信号进行同步处理（两级触发器同步，减少亚稳态）。
+ 2. 使用边沿检测电路检测待测信号的上升沿（或下降沿，一般用上升沿）。
+ 3. 在检测到上升沿时，启动一个计数器，该计数器由200MHz时钟驱动，每次计数增加1，直到下一个上升沿到来。
+ 4. 这样，在两个上升沿之间，计数器的值乘以5ns就是待测信号的周期。
+ 但是，由于待测信号频率可能高达100MHz（周期10ns），而我们的时钟周期为5ns，所以在一个待测信号周期内，计数器最多计数2次（10ns/5ns=2）。因此，对于100MHz的信号，计数器的值在2左右。对于1MHz的信号（周期1000ns），计数器的值为200（1000ns/5ns=200）。
+ 然而，直接计数只能得到整数倍的时钟周期，可能存在±1个时钟周期的误差。为了减小误差，我们可以采用多次测量取平均的方法，或者使用更精细的方法（如游标卡尺法或时间数字转换器TDC），但考虑到资源，我们这里采用简单的多次测量平均。
+ 但是，题目要求精确测量，而且频率范围较宽（1-100MHz），我们需要注意：
+  - 对于高频信号（如接近100MHz），由于计数器只能计数2次，所以相对误差可能较大（±1个计数相当于±5ns，而周期只有10ns，误差50%）。因此，我们需要更长的测量时间（多个周期）来降低误差。
+  - 对于低频信号，一个周期内计数较多，误差相对较小。
+ 改进思路：我们可以测量多个周期（比如1000个周期）的时间，然后除以周期数，得到平均周期。这样，对于高频信号，1000个周期的时间是10ns*1000=10us，在200MHz下计数器的值为2000（10us/5ns=2000），这样±1个计数误差相当于0.05%，大大提高了精度。对于低频信号（如1MHz），1000个周期的时间为1ms，计数器的值为200000，±1个计数误差为0.0005%。
+ 具体步骤：
+ 1. 使用同步电路对待测信号（假设为sig_in）进行同步，得到sync_sig。
+ 2. 检测sync_sig的上升沿，产生一个时钟周期的高脉冲（pos_edge）。
+ 3. 设计一个计数器（count），由200MHz时钟驱动，每当检测到pos_edge时，计数器不清零，而是继续计数。同时，我们另外设置一个周期计数器（cycle_count），用于记录待测信号的上升沿个数。
+ 4. 当cycle_count计数达到N（比如1000）时，记录下此时count的值，同时将count清零，cycle_count清零，并重新开始计数。同时，将记录的值（即N个周期的时间）锁存到输出寄存器。
+ 5. 根据锁存的值计算平均周期：T_avg = (锁存值 * 5ns) / N。
+ 6. 频率则为：f = 1 / T_avg = N / (锁存值 * 5ns) = N * 200e6 / 锁存值 （单位Hz）。
+ 注意：在清零和锁存时要注意时序，避免在计数过程中出现竞争。我们可以在检测到第N个上升沿时，将当前count值锁存，然后清零计数器，同时清零cycle_count。
+ 但是，由于我们是在第N个上升沿锁存，那么锁存的值实际上是前N-1个周期的时间？不对，让我们分析：
+    第一个上升沿到来：cycle_count=1，此时计数器count开始计数（实际上从0开始，但第一个上升沿时计数器可能是0，然后开始计数到下一个上升沿）。
+    第二个上升沿到来：cycle_count=2，此时计数器已经记录了一个完整周期（从第一个上升沿到第二个上升沿）的计数值。
+    因此，当第N个上升沿到来时，计数器记录的是前N-1个完整周期的时间？不对，实际上，从第一个上升沿开始，到第N个上升沿，中间有N-1个间隔，即N-1个周期。所以，我们想测量N个周期，需要从第一个上升沿开始，到第N+1个上升沿结束？这样我们就要记录N+1个上升沿，然后得到N个周期的时间。
+ 为了测量N个周期，我们可以这样：
+    在第一个上升沿时，计数器开始计数（但此时计数器可能不是0，所以我们需要在第一个上升沿时清零计数器？）不对，这样会丢失第一个上升沿到第二个上升沿的时间。
+ 另一种方法：
+    我们不需要在第一个上升沿清零计数器，而是让计数器一直计数。我们记录第一个上升沿时的计数器值（start_count），然后等到第N+1个上升沿到来时，记录此时的计数器值（end_count），则N个周期的时间为：end_count - start_count。
+ 具体步骤：
+  1. 同步待测信号，检测上升沿。
+  2. 设置一个计数器count，由200MHz驱动，连续计数（假设32位，足够大）。
+  3. 设置一个周期计数器cycle_count，初始为0。
+  4. 当检测到第一个上升沿时，将当前count值存入start_count寄存器，同时cycle_count加1（变为1）。
+  5. 之后每检测到一个上升沿，cycle_count加1。
+  6. 当cycle_count达到N+1时（即已经记录了N+1个上升沿），将当前count值存入end_count寄存器，然后计算差值：period_count = end_count - start_count。这个差值就是N个周期的时间（因为从第一个上升沿到第N+1个上升沿之间有N个周期）。
+  7. 然后，将cycle_count清零，等待下一个上升沿到来，重新开始记录start_count（即下一个上升沿到来时，重新开始记录）。
+ 注意：在计算差值时，要考虑计数器溢出的情况，但由于我们测量的是N个周期的时间，对于最高100MHz，N=1000，1000个周期的时间为10us（1000*10ns=10us），在200MHz下需要2000个计数（10us/5ns=2000），所以32位计数器足够，不会溢出。因此，我们不需要考虑溢出。
+ 但是，如果待测信号频率很低，比如1MHz，1000个周期的时间为1ms，需要200000个计数，也在32位计数范围内。
+ 因此，我们可以这样设计：
+ 模块：
+  输入：clk_50M, reset, sig_in
+  输出：freq_out (32位，单位为Hz)
+ 内部信号：
+  - clk_200M: 由PLL产生的200MHz时钟。
+  - sig_sync1, sig_sync2: 两级同步后的待测信号。
+  - sig_delay: 用于边沿检测，保存上一拍的同步信号。
+  - pos_edge: 检测到上升沿时产生一个时钟周期的高电平。
+  - count: 32位计数器，由clk_200M驱动，连续计数。
+  - cycle_count: 计数上升沿的个数（0~N+1），用10位或更多，根据N来定（N=1000，则至少11位）。
+  - start_count: 32位寄存器，记录第一个上升沿时的count值。
+  - end_count: 32位寄存器，记录第N+1个上升沿时的count值。
+  - period_count: 32位，记录N个周期的计数值（end_count - start_count）。
+  - valid: 当计算得到period_count有效时，置位一个周期。
+ 状态控制：
+  我们用一个状态机控制，但也可以不用，用简单的计数器控制。
+ 步骤：
+  1. 复位后，所有寄存器清零，等待第一个上升沿。
+  2. 当检测到第一个上升沿时，将当前的count值存入start_count，同时cycle_count加1（从0变为1）。
+  3. 之后每检测到一个上升沿，cycle_count加1，直到cycle_count等于N+1（即1001）时，将当前的count值存入end_count，然后计算period_count = end_count - start_count，并置位valid信号（一个时钟周期）。
+  4. 同时，清零cycle_count，回到等待状态，等待下一个上升沿（即重新开始下一轮测量）。
+ 5. 计算频率：freq_out = (N * 200000000) / period_count;   // 因为200MHz=200000000Hz，N个周期的时间为period_count*5ns，总时间为period_count*5e-9秒，所以频率为 N/(period_count*5e-9) = (N * 200000000) / period_count。
+ 注意：除法在FPGA中比较消耗资源，我们可以使用流水线除法器。
+ 但是，由于待测信号频率范围宽，当待测信号频率很低时，完成一次测量需要很长时间（比如1MHz信号，1000个周期需要1ms），所以输出频率的更新速度会较慢。我们可以根据实际需求调整N，比如在低频时减少N，高频时增加N，以平衡更新速度和精度。但为了简化，我们可以固定N=1000。
+ 另外，如果待测信号频率非常高（比如100MHz），1000个周期只需要10us，所以更新频率为100kHz（每秒更新10万次），对于一般应用足够了。
+ 同步电路设计：
+  为了避免亚稳态，将待测信号sig_in用两个D触发器同步到clk_200M时钟域：
+    always @(posedge clk_200M or posedge reset) begin
+        if (reset) begin
+            sig_sync1 <= 1'b0;
+            sig_sync2 <= 1'b0;
+        end
+        else begin
+            sig_sync1 <= sig_in;
+            sig_sync2 <= sig_sync1;
+        end
+    end
+ 边沿检测：
+    always @(posedge clk_200M or posedge reset) begin
+        if (reset)
+            sig_delay <= 1'b0;
+        else
+            sig_delay <= sig_sync2;
+    end
+    assign pos_edge = ~sig_delay & sig_sync2;  // 上升沿检测：上一拍为0，当前拍为1
+ 计数器count：
+    always @(posedge clk_200M or posedge reset) begin
+        if (reset)
+            count <= 0;
+        else
+            count <= count + 1;
+    end
+ 周期计数器cycle_count和状态控制：
+    always @(posedge clk_200M or posedge reset) begin
+        if (reset) begin
+            cycle_count <= 0;
+            start_count <= 0;
+            end_count <= 0;
+            period_count <= 0;
+            valid <= 0;
+        end
+        else begin
+            valid <= 0;   // valid只持续一个周期
+            if (pos_edge) begin
+                if (cycle_count == 0) begin  // 第一个上升沿
+                    start_count <= count;
+                    cycle_count <= cycle_count + 1;
+                end
+                else if (cycle_count == N) begin  // 第N+1个上升沿，因为cycle_count从0开始计数，当cycle_count为N时，表示已经检测到第N+1个上升沿（因为0对应第一个，1对应第二个...N对应第N+1个）
+                    end_count <= count;
+                    period_count <= end_count - start_count;  // 注意：这里我们直接使用组合逻辑减法，实际上可以打一拍
+                    cycle_count <= 0;   // 清零，重新开始
+                    valid <= 1;         // 数据有效
+                end
+                else
+                    cycle_count <= cycle_count + 1;
+            end
+        end
+    end
+ 注意：在计算period_count时，我们使用end_count - start_count，但是end_count在此时（第N+1个上升沿）才被赋值，所以这个减法应该延迟一个周期？或者我们可以在状态机中打一拍。
+ 修改：在第N+1个上升沿时，我们记录下end_count，然后在下个时钟周期计算period_count，并置位valid。这样更安全。
+ 因此，修改状态控制：
+    reg [31:0] end_count_reg;
+    always @(posedge clk_200M or posedge reset) begin
+        if (reset) begin
+            cycle_count <= 0;
+            start_count <= 0;
+            end_count <= 0;
+            period_count <= 0;
+            valid <= 0;
+            state <= 0;
+        end
+        else begin
+            valid <= 0;
+            if (pos_edge) begin
+                if (cycle_count == 0) begin
+                    start_count <= count;
+                    cycle_count <= 1;   // 下一个上升沿计数为1
+                end
+                else if (cycle_count == N) begin   // 这是第N+1个上升沿
+                    end_count <= count;   // 记录当前计数值
+                    cycle_count <= 0;     // 清零，为下一轮准备
+                    // 此时，我们并不立即计算，而是设置一个标志，在下一个时钟周期计算
+                    state <= 1;
+                end
+                else
+                    cycle_count <= cycle_count + 1;
+            end
+            // 状态标志，用于计算
+            if (state) begin
+                period_count <= end_count - start_count;   // 计算N个周期的计数值
+                valid <= 1;
+                state <= 0;
+            end
+        end
+    end
+ 然后，我们使用一个除法器计算频率：
+    freq_out = (N * 200_000_000) / period_count;
+ 除法器可以使用FPGA内部的硬核除法器（如果支持）或者使用IP核生成。由于除法比较慢，我们可以用流水线除法器。
+ 注意：当period_count为0时，除法会出错，所以需要避免。但在实际测量中，period_count不可能为0（至少计数了2个周期，对于100MHz，N=1000，period_count至少为2000）。所以我们可以不考虑除0，但为了安全，可以加一个判断。
+ 最后，我们将计算得到的频率值输出。
+ 总结：
+  1. 使用PLL将50MHz倍频到200MHz。
+  2. 使用200MHz时钟进行计数和同步。
+  3. 测量N（1000）个待测信号周期的时间（通过计数器差值得到）。
+  4. 用公式计算频率：freq_out = (N * 200000000) / period_count。
+ 代码结构：
+  module freq_meter(
+      input clk_50M,
+      input reset,
+      input sig_in,
+      output reg [31:0] freq_out,
+      output reg valid_out   // 可选，指示freq_out有效
+  );
+  // PLL实例化，产生clk_200M和locked信号
+  wire clk_200M;
+  wire locked;
+  pll pll_inst(
+      .inclk0(clk_50M),
+      .c0(clk_200M),
+      .locked(locked)
+  );
+  // 复位信号同步到clk_200M时钟域，或者使用locked作为复位解除信号
+  wire reset_sync;
+  sync_reset sync_reset_inst(
+      .clk(clk_200M),
+      .reset_in(reset | ~locked),
+      .reset_out(reset_sync)
+  );
+  // 同步待测信号
+  reg sig_sync1, sig_sync2;
+  always @(posedge clk_200M or posedge reset_sync) begin
+      if (reset_sync) begin
+          sig_sync1 <= 0;
+          sig_sync2 <= 0;
+      end else begin
+          sig_sync1 <= sig_in;
+          sig_sync2 <= sig_sync1;
+      end
+  end
+  // 边沿检测
+  reg sig_delay;
+  always @(posedge clk_200M or posedge reset_sync) begin
+      if (reset_sync)
+          sig_delay <= 0;
+      else
+          sig_delay <= sig_sync2;
+  end
+  wire pos_edge = ~sig_delay & sig_sync2;
+  // 200MHz计数器
+  reg [31:0] count;
+  always @(posedge clk_200M or posedge reset_sync) begin
+      if (reset_sync)
+          count <= 0;
+      else
+          count <= count + 1;
+  end
+  // 周期计数器和状态机
+  parameter N = 1000;
+  reg [10:0] cycle_count;  // 0~1001，需要11位
+  reg [31:0] start_count, end_count;
+  reg state; // 状态标志，用于触发计算
+  // 测量控制
+  always @(posedge clk_200M or posedge reset_sync) begin
+      if (reset_sync) begin
+          cycle_count <= 0;
+          start_count <= 0;
+          end_count <= 0;
+          state <= 0;
+      end else begin
+          if (pos_edge) begin
+              if (cycle_count == 0) begin
+                  start_count <= count;
+                  cycle_count <= 1;
+              end else if (cycle_count == N) begin
+                  end_count <= count;
+                  cycle_count <= 0;
+                  state <= 1;   // 标记需要计算
+              end else begin
+                  cycle_count <= cycle_count + 1;
+              end
+          end
+          if (state) begin
+              state <= 0;
+              // 这里我们触发计算，计算period_count和频率
+          end
+      end
+  end
+  // 计算period_count和频率
+  reg [31:0] period_count;
+  reg valid_calc;
+  always @(posedge clk_200M or posedge reset_sync) begin
+      if (reset_sync) begin
+          period_count <= 0;
+          valid_calc <= 0;
+      end else if (state) begin
+          period_count <= end_count - start_count;
+          valid_calc <= 1;
+      end else
+          valid_calc <= 0;
+  end
+  // 除法器：freq = (N * 200_000_000) / period_count;
+  // 注意：当valid_calc为1时，我们启动一次除法计算。由于除法可能需要多个周期，我们可以用流水线除法器IP，或者使用状态机等待除法完成。
+  // 为了简单，我们这里使用组合逻辑除法？但组合逻辑除法在32位时会很慢，所以建议用寄存器打拍，或者使用IP核。
+  // 使用一个除法器IP核，或者使用Verilog的除法运算符（综合器会推断出除法器），但会消耗多个周期。
+  // 由于我们的数据更新速度较慢（每1000个周期才更新一次），我们可以等待除法完成。
+  // 方法：当valid_calc为1时，将除法操作数锁存，然后开始除法运算，并等待结果。
+  // 我们假设除法器需要16个周期完成，我们可以用状态机等待，然后输出结果。
+  // 或者，我们可以直接使用组合逻辑除法，但可能会影响时序。因此，我们使用流水线除法器IP。
+  // 这里为了简化，我们直接使用除法运算符，并用寄存器打拍，但注意：除法可能需要多个周期，所以结果会延迟。
+  reg [31:0] dividend;
+  reg [31:0] divisor;
+  reg div_valid;
+  reg [31:0] freq_reg;
+  always @(posedge clk_200M) begin
+      if (valid_calc) begin
+          dividend <= N * 200000000;   // 注意：N*200000000可能会超过32位？N=1000，1000*200000000=200000000000，需要38位。所以我们需要调整位宽。
+          divisor <= period_count;
+          div_valid <= 1;
+      end else
+          div_valid <= 0;
+  end
+  // 扩大位宽：200000000*1000=200e9，小于2^38（约274e9），所以用38位。
+  wire [37:0] dividend_w = 1000 * 200000000;  // 这是一个常数，可以预先计算：200,000,000,000
+  // 实际上，我们可以用常数：200_000_000_000
+  // 重新调整：
+  reg [37:0] dividend_reg;
+  always @(posedge clk_200M) begin
+      if (valid_calc) begin
+          dividend_reg <= 200_000_000_000;   // 1000 * 200_000_000 = 200_000_000_000
+          divisor <= period_count;
+          div_valid <= 1;
+      end else
+          div_valid <= 0;
+  end
+  // 除法：freq = dividend_reg / divisor;
+  reg [37:0] div_result;
+  reg [37:0] remainder;
+  reg div_done;
+  // 使用多周期除法，例如用38位/32位的无符号除法，我们可以用状态机实现，或者使用IP核。
+  // 这里为了简单，我们直接使用IP核，或者使用Verilog的除法运算符，但会消耗较多逻辑资源。
+  // 使用除法运算符：
+  always @(posedge clk_200M) begin
+      if (div_valid) begin
+          div_result <= dividend_reg / divisor;   // 整数除法，取整
+          remainder <= dividend_reg % divisor;
+          div_done <= 1;
+      end else
+          div_done <= 0;
+  end
+  // 由于div_result是38位，但频率最大为100MHz，所以32位足够。我们取div_result的低32位。
+  always @(posedge clk_200M) begin
+      if (div_done) begin
+          freq_out <= div_result[31:0];   // 实际上，div_result最大为200e9/1=200e9，但200e9大于2^31（约2e9），所以32位不够？我们需要考虑。
+  // 问题：当待测信号频率很低时，period_count很大，div_result会很小（例如1MHz，div_result=200e9/200000=1000000，即1e6，在32位范围内）。但是，当待测信号频率很高时，例如100MHz，period_count=2000（1000个周期），div_result=200e9/2000=100e6，即100000000，也在32位范围内（0~2^31-1）。所以32位足够。
+  // 因此，我们可以直接赋值：
+          freq_out <= div_result[31:0];
+          valid_out <= 1;
+      end else
+          valid_out <= 0;
+  end
+ 注意：除法运算符在综合时可能会生成大量的组合逻辑，导致时序不满足。因此，建议使用FPGA厂商提供的除法器IP核，并设置流水线级数，以达到时序要求。
+ 另外，当period_count为0时，除法会出错，但如前所述，period_count至少为2000（对于100MHz），所以不会为0。
+ 最后，我们还要考虑待测信号频率范围，如果低于1MHz，我们固定N=1000没有问题，但如果低于1Hz，那么1000个周期会需要1000秒，显然不行。所以实际应用中，可能需要根据频率范围调整N。但题目要求1-100MHz，所以没问题。
+ 综上所述，我们完成了设计。
+ 注意：以上代码仅为示例，需要根据实际情况调整和优化，包括复位、同步、除法器的实现等。
+ 由于资源限制（EP4CE6E22C8N是Cyclone IV E系列，逻辑资源较少），除法器可能会消耗较多资源，如果资源不够，可以考虑使用状态机实现的移位除法器（非恢复除法）或者减少位宽。
+ 另外，如果待测信号频率远低于1MHz（比如不在题目要求范围内），则测量时间会很长，需要调整N。我们可以设计自适应调整N的机制，比如先测量一个粗略的频率，然后根据频率选择N，但这会复杂很多。本题要求1-100MHz，所以可以固定N=1000。
+ 最后，测量精度：
+  对于100MHz信号，理论period_count=2000，实际测量可能为1999~2001（由于相位关系，±1个计数），所以频率计算值在100.05MHz到99.95MHz之间，误差0.05%。
+  对于1MHz信号，理论period_count=200000，实际±1，误差0.0005%。
+ 因此，满足要求。
+ 代码实现时，注意各个信号的位宽和复位。

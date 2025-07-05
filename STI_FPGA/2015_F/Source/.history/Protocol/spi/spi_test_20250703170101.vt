@@ -1,0 +1,44 @@
+//********************************//
+//! 模块: spi_test_vlg_tst
+//  功能: 测试模块
+//********************************//
+`timescale 1 ps/ 1 ps
+
+module spi_test_vlg_tst();
+
+//**************************************// 信号声明         //**********************************//
+reg en_spi;
+reg sys_clk;
+reg sys_rst_n;                                        
+
+//**************************************// 主程序段         //**********************************//                     
+spi_test ins_spi_test(
+// port map - connection between master ports and signals/registers   
+	.en_spi(en_spi),
+	.sys_clk(sys_clk),
+	.sys_rst_n(sys_rst_n)
+);
+
+//**************************************// 主程序段         //**********************************//
+initial begin                                                                                           
+$display("Running testbench");                       
+end     
+
+//
+initial begin
+		sys_rst_n 	= 1'b1;
+		sys_clk 	= 1'b0;
+
+	#7 	sys_rst_n 	= 1'b0;
+	#15 sys_rst_n 	= 1'b1;
+end
+
+always begin                                                                                           
+	#5 	sys_clk 	= ~sys_clk;
+end 
+
+//**************************************// 主程序段         //**********************************//
+
+//**************************************// 结束模块         //**********************************//                                         
+endmodule
+

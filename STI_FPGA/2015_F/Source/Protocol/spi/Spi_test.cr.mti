@@ -1,0 +1,29 @@
+D:/Exercise_Program/Quartus/STI_FPGA/2015_F/Source/Protocol/spi/spi_slave.v {1 {vlog -work work -vopt -stats=none D:/Exercise_Program/Quartus/STI_FPGA/2015_F/Source/Protocol/spi/spi_slave.v
+Model Technology ModelSim SE-64 vlog 10.4 Compiler 2014.12 Dec  3 2014
+-- Compiling module spi_slave
+
+Top level modules:
+	spi_slave
+
+} {} {}} D:/Exercise_Program/Quartus/STI_FPGA/2015_F/Source/Protocol/spi/spi_test.vt {1 {vlog -work work -vopt -stats=none D:/Exercise_Program/Quartus/STI_FPGA/2015_F/Source/Protocol/spi/spi_test.vt
+Model Technology ModelSim SE-64 vlog 10.4 Compiler 2014.12 Dec  3 2014
+-- Compiling module t0
+
+Top level modules:
+	t0
+
+} {} {}} D:/Exercise_Program/Quartus/STI_FPGA/2015_F/Source/Protocol/spi/spi_test.v {1 {vlog -work work -vopt -stats=none D:/Exercise_Program/Quartus/STI_FPGA/2015_F/Source/Protocol/spi/spi_test.v
+Model Technology ModelSim SE-64 vlog 10.4 Compiler 2014.12 Dec  3 2014
+-- Compiling module spi_test
+
+Top level modules:
+	spi_test
+
+} {} {}} D:/Exercise_Program/Quartus/STI_FPGA/2015_F/Source/Protocol/spi/spi_master.v {1 {vlog -work work -vopt -stats=none D:/Exercise_Program/Quartus/STI_FPGA/2015_F/Source/Protocol/spi/spi_master.v
+Model Technology ModelSim SE-64 vlog 10.4 Compiler 2014.12 Dec  3 2014
+-- Compiling module spi_master
+
+Top level modules:
+	spi_master
+
+} {} {}}

@@ -1,0 +1,128 @@
+m255
+K4
+z2
+13
+!s112 1.1
+!i10d 8192
+!i10e 25
+!i10f 100
+cModel Technology
+Z0 dD:/Exercise_Program/Quartus/LANQIAO/Exec/My/simulation
+T_opt
+!s110 1751533515
+Vo>zGi==<IP5ihEhTD5dY]2
+04 16 4 work spi_test_vlg_tst fast 0
+=1-b025aa7ff0db-686647cb-259-c758
+Z1 o-quiet -auto_acc_if_foreign -work work +acc
+n@_opt
+Z2 OL;O;10.4;61
+R0
+T_opt1
+!s110 1751535142
+Vj=dTFk9YaNcdaFE_N;[992
+04 2 4 work t0 fast 0
+=8-b025aa7ff0db-68664e26-297-8988
+R1
+n@_opt1
+R2
+R0
+vspi_master
+Z3 !s110 1751535148
+!i10b 1
+!s100 0PJH:NL:0KfE4la_44Ykj0
+IS=^``V0A052QT5mL[:fJA2
+Z4 VDg1SIo80bB@j0V0VzS_@n1
+Z5 dD:/Exercise_Program/Quartus/STI_FPGA/2015_F/Source/Protocol/spi
+w1751534816
+8D:/Exercise_Program/Quartus/STI_FPGA/2015_F/Source/Protocol/spi/spi_master.v
+FD:/Exercise_Program/Quartus/STI_FPGA/2015_F/Source/Protocol/spi/spi_master.v
+L0 5
+Z6 OL;L;10.4;61
+r1
+!s85 0
+31
+!s108 1751535148.040000
+!s107 D:/Exercise_Program/Quartus/STI_FPGA/2015_F/Source/Protocol/spi/spi_master.v|
+!s90 -reportprogress|300|-work|work|-vopt|-stats=none|D:/Exercise_Program/Quartus/STI_FPGA/2015_F/Source/Protocol/spi/spi_master.v|
+!i113 0
+Z7 o-work work -L mtiAvm -L mtiRnm -L mtiOvm -L mtiUvm -L mtiUPF -L infact
+vspi_slave
+R3
+!i10b 1
+!s100 X638S9Ub[91?49;K:`gG40
+I:Q31@X;^Zf6:UJC[f2SMl3
+R4
+R5
+w1751535145
+8D:/Exercise_Program/Quartus/STI_FPGA/2015_F/Source/Protocol/spi/spi_slave.v
+FD:/Exercise_Program/Quartus/STI_FPGA/2015_F/Source/Protocol/spi/spi_slave.v
+L0 5
+R6
+r1
+!s85 0
+31
+!s108 1751535148.072000
+!s107 D:/Exercise_Program/Quartus/STI_FPGA/2015_F/Source/Protocol/spi/spi_slave.v|
+!s90 -reportprogress|300|-work|work|-vopt|-stats=none|D:/Exercise_Program/Quartus/STI_FPGA/2015_F/Source/Protocol/spi/spi_slave.v|
+!i113 0
+R7
+vspi_test
+R3
+!i10b 1
+!s100 fZ1FNPh1`GQ_m^197DPeo0
+I=3T@Z>KB;gE<;5kb6N?BS2
+R4
+R5
+w1751533967
+8D:/Exercise_Program/Quartus/STI_FPGA/2015_F/Source/Protocol/spi/spi_test.v
+FD:/Exercise_Program/Quartus/STI_FPGA/2015_F/Source/Protocol/spi/spi_test.v
+L0 5
+R6
+r1
+!s85 0
+31
+!s108 1751535148.106000
+!s107 D:/Exercise_Program/Quartus/STI_FPGA/2015_F/Source/Protocol/spi/spi_test.v|
+!s90 -reportprogress|300|-work|work|-vopt|-stats=none|D:/Exercise_Program/Quartus/STI_FPGA/2015_F/Source/Protocol/spi/spi_test.v|
+!i113 0
+R7
+vspi_test_vlg_tst
+!s110 1751533486
+!i10b 1
+!s100 zD0h^kafX?Vaab0Mezz0d1
+IKc?:0gbemGE7?5o2dPWj@3
+R4
+R5
+w1751533367
+Z8 8D:/Exercise_Program/Quartus/STI_FPGA/2015_F/Source/Protocol/spi/spi_test.vt
+Z9 FD:/Exercise_Program/Quartus/STI_FPGA/2015_F/Source/Protocol/spi/spi_test.vt
+L0 7
+R6
+r1
+!s85 0
+31
+!s108 1751533486.623000
+Z10 !s107 D:/Exercise_Program/Quartus/STI_FPGA/2015_F/Source/Protocol/spi/spi_test.vt|
+Z11 !s90 -reportprogress|300|-work|work|-vopt|-stats=none|D:/Exercise_Program/Quartus/STI_FPGA/2015_F/Source/Protocol/spi/spi_test.vt|
+!i113 0
+R7
+vt0
+R3
+!i10b 1
+!s100 Qh3nYLUSPPDLn?iik[B2B3
+ILFEba`XU7[UNidESIFBlN1
+R4
+R5
+w1751533703
+R8
+R9
+L0 7
+R6
+r1
+!s85 0
+31
+!s108 1751535148.010000
+R10
+R11
+!i113 0
+R7

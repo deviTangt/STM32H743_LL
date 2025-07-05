@@ -1,0 +1,28 @@
+
+`timescale 1 ps/ 1 ps
+module spi_test_vlg_tst();
+
+reg eachvec;
+
+reg en_spi;
+reg sys_clk;
+reg sys_rst_n;                                        
+
+// assign statements (if any)                          
+spi_test i1 (
+// port map - connection between master ports and signals/registers   
+	.en_spi(en_spi),
+	.sys_clk(sys_clk),
+	.sys_rst_n(sys_rst_n)
+);
+
+initial begin                                                                                           
+$display("Running testbench");                       
+end     
+
+always begin                                                                                           
+                                          
+end 
+                                                  
+endmodule
+

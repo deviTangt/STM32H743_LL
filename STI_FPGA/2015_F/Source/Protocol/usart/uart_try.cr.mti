@@ -1,0 +1,29 @@
+D:/Exercise_Program/Quartus/STI_FPGA/2015_F/Source/Protocol/usart/uart_try.vt {1 {vlog -work work -vopt -stats=none D:/Exercise_Program/Quartus/STI_FPGA/2015_F/Source/Protocol/usart/uart_try.vt
+Model Technology ModelSim SE-64 vlog 10.4 Compiler 2014.12 Dec  3 2014
+-- Compiling module t0
+
+Top level modules:
+	t0
+
+} {} {}} D:/Exercise_Program/Quartus/STI_FPGA/2015_F/Source/Protocol/usart/uart_tx.v {1 {vlog -work work -vopt -stats=none D:/Exercise_Program/Quartus/STI_FPGA/2015_F/Source/Protocol/usart/uart_tx.v
+Model Technology ModelSim SE-64 vlog 10.4 Compiler 2014.12 Dec  3 2014
+-- Compiling module uart_tx
+
+Top level modules:
+	uart_tx
+
+} {} {}} D:/Exercise_Program/Quartus/STI_FPGA/2015_F/Source/Protocol/usart/uart_rx.v {1 {vlog -work work -vopt -stats=none D:/Exercise_Program/Quartus/STI_FPGA/2015_F/Source/Protocol/usart/uart_rx.v
+Model Technology ModelSim SE-64 vlog 10.4 Compiler 2014.12 Dec  3 2014
+-- Compiling module uart_rx
+
+Top level modules:
+	uart_rx
+
+} {} {}} D:/Exercise_Program/Quartus/STI_FPGA/2015_F/Source/Protocol/usart/uart_string_handle.v {1 {vlog -work work -vopt -stats=none D:/Exercise_Program/Quartus/STI_FPGA/2015_F/Source/Protocol/usart/uart_string_handle.v
+Model Technology ModelSim SE-64 vlog 10.4 Compiler 2014.12 Dec  3 2014
+-- Compiling module uart_string_handle
+
+Top level modules:
+	uart_string_handle
+
+} {} {}}
